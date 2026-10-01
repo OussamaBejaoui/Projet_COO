@@ -7,7 +7,9 @@ authors = [
     { name = "OussamaBejaoui", email = "oussemabejaoui996@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "django>=6.1.1",
+]
 
 [project.scripts]
 tp-coo = "tp_coo:main"
