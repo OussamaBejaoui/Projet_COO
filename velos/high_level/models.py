@@ -30,6 +30,9 @@ class Machine(models.Model):
     cout_maintenance = models.IntegerField()
     superficie = models.IntegerField()
 
+    def costs(self):
+        return self.prix
+
     def __str__(self):
         return self.nom
 
@@ -37,6 +40,9 @@ class Machine(models.Model):
 class QuantiteMachine(models.Model):
     machine = models.ForeignKey(Machine, on_delete=models.PROTECT)
     nombre = models.IntegerField()
+
+    def costs(self):
+        return self.nombre * self.machine.prix
 
     def __str__(self):
         return f"{self.nombre} x {self.machine}"
@@ -48,6 +54,11 @@ class Lieu(models.Model):
     superficie = models.IntegerField()
     quantite_machines = models.ManyToManyField(QuantiteMachine, blank=True)
     consommation_electrique = models.IntegerField()
+
+    def costs(self):
+        terrain = self.superficie * self.ville.prix_m2
+        machines = sum(qm.costs() for qm in self.quantite_machines.all())
+        return terrain + machines
 
     def __str__(self):
         return f"{self.nom} ({self.ville})"
@@ -110,6 +121,10 @@ class QuantiteProduit(models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.PROTECT)
     nombre = models.IntegerField()
 
+    def costs(self):
+        prix = self.produit.prixproduit_set.order_by("prix_achat").first()
+        return self.nombre * (prix.prix_achat if prix else 0)
+
     def __str__(self):
         return f"{self.nombre} x {self.produit}"
 
@@ -117,6 +132,9 @@ class QuantiteProduit(models.Model):
 class Stock(models.Model):
     quantite_produits = models.ManyToManyField(QuantiteProduit, blank=True)
     palettes_max = models.IntegerField()
+
+    def costs(self):
+        return sum(qp.costs() for qp in self.quantite_produits.all())
 
     def __str__(self):
         return f"Stock {self.pk} (max {self.palettes_max} palettes)"
@@ -127,6 +145,9 @@ class PointDeVente(models.Model):
     lieu = models.ForeignKey(Lieu, on_delete=models.PROTECT)
     heures_de_travail = models.IntegerField()
     stock = models.ForeignKey(Stock, on_delete=models.PROTECT)
+
+    def costs(self):
+        return self.lieu.costs() + self.stock.costs()
 
     def __str__(self):
         return self.nom
