@@ -22,3 +22,6 @@ build-backend = "uv_build"
 dev = [
     "prek>=0.5.4",
 ]
+
+[tool.ruff]
+extend-exclude = ["migrations"]
