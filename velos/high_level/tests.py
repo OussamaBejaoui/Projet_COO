@@ -5,6 +5,7 @@ from django.test import TestCase
 from .models import (
     Lieu,
     Machine,
+    Operation,
     Pays,
     PointDeVente,
     PrixProduit,
@@ -78,3 +79,72 @@ class PointDeVenteCostsTests(TestCase):
             nom="PDV", lieu=lieu, heures_de_travail=40, stock=stock
         )
         self.assertEqual(pdv.costs(), 113_750)
+
+
+class JsonViewTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        pays = Pays.objects.create(
+            nom="France", tva=20, tarif_electrique=20, salaire_minimum=12
+        )
+        cls.ville = Ville.objects.create(
+            nom="Labège", taxe_immobiliere=6, prix_m2=2000, pays=pays
+        )
+        cls.machine = Machine.objects.create(
+            nom="CNC", prix=10000, duree_de_vie=10, cout_maintenance=0, superficie=8
+        )
+        cls.lieu = Lieu.objects.create(
+            nom="Usine", ville=cls.ville, superficie=50, consommation_electrique=5000
+        )
+        cls.lieu.quantite_machines.add(
+            QuantiteMachine.objects.create(machine=cls.machine, nombre=2)
+        )
+
+    def test_ville_json(self):
+        response = self.client.get(f"/ville/{self.ville.pk}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "id": self.ville.pk,
+                "nom": "Labège",
+                "taxe_immobiliere": 6,
+                "prix_m2": 2000,
+                "pays": self.ville.pays_id,
+            },
+        )
+
+    def test_lieu_json_has_relation_ids(self):
+        data = self.client.get(f"/lieu/{self.lieu.pk}/").json()
+        self.assertEqual(data["ville"], self.ville.pk)
+        self.assertEqual(len(data["quantite_machines"]), 1)
+
+    def test_missing_object_is_404(self):
+        self.assertEqual(self.client.get("/lieu/9999/").status_code, 404)
+
+    def test_api_extended_nests_relations(self):
+        data = self.client.get(f"/api/{self.lieu.pk}").json()
+        self.assertEqual(data["ville"]["nom"], "Labège")
+        self.assertEqual(data["ville"]["pays"]["nom"], "France")
+        qm = data["quantite_machines"][0]
+        self.assertEqual(qm["nombre"], 2)
+        self.assertEqual(qm["machine"]["nom"], "CNC")
+
+    def test_extended_survives_cycles(self):
+        produit = Produit.objects.create(
+            nom="P", prix_de_vente=1, duree_de_vie=1, nombre_par_palette=1
+        )
+        op = Operation.objects.create(
+            nom="Op",
+            cout=1,
+            machine=self.machine,
+            heures_de_travail=1,
+            consommation_electrique=1,
+        )
+        op.quantite_produits.add(
+            QuantiteProduit.objects.create(produit=produit, nombre=1)
+        )
+        produit.operations.add(op)  # Produit -> Operation -> QuantiteProduit -> Produit
+        data = produit.json_extended()
+        inner = data["operations"][0]["quantite_produits"][0]["produit"]
+        self.assertEqual(inner, {"id": produit.pk})

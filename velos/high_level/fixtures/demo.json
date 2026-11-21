@@ -1,0 +1,281 @@
+[
+{
+  "model": "high_level.pays",
+  "pk": 1,
+  "fields": {
+    "nom": "France",
+    "tva": 20,
+    "tarif_electrique": 20,
+    "salaire_minimum": 12
+  }
+},
+{
+  "model": "high_level.ville",
+  "pk": 1,
+  "fields": {
+    "nom": "Toulouse",
+    "taxe_immobiliere": 8,
+    "prix_m2": 4000,
+    "pays": 1
+  }
+},
+{
+  "model": "high_level.ville",
+  "pk": 2,
+  "fields": {
+    "nom": "Labège",
+    "taxe_immobiliere": 6,
+    "prix_m2": 2000,
+    "pays": 1
+  }
+},
+{
+  "model": "high_level.machine",
+  "pk": 1,
+  "fields": {
+    "nom": "CNC",
+    "prix": 10000,
+    "duree_de_vie": 10,
+    "cout_maintenance": 500,
+    "superficie": 8
+  }
+},
+{
+  "model": "high_level.machine",
+  "pk": 2,
+  "fields": {
+    "nom": "Presse",
+    "prix": 5000,
+    "duree_de_vie": 15,
+    "cout_maintenance": 200,
+    "superficie": 4
+  }
+},
+{
+  "model": "high_level.quantitemachine",
+  "pk": 1,
+  "fields": {
+    "machine": 1,
+    "nombre": 1
+  }
+},
+{
+  "model": "high_level.quantitemachine",
+  "pk": 2,
+  "fields": {
+    "machine": 2,
+    "nombre": 1
+  }
+},
+{
+  "model": "high_level.lieu",
+  "pk": 1,
+  "fields": {
+    "nom": "LBG-01",
+    "ville": 2,
+    "superficie": 50,
+    "consommation_electrique": 5000,
+    "quantite_machines": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "high_level.lieu",
+  "pk": 2,
+  "fields": {
+    "nom": "TLS-01",
+    "ville": 1,
+    "superficie": 209,
+    "consommation_electrique": 1200,
+    "quantite_machines": []
+  }
+},
+{
+  "model": "high_level.transport",
+  "pk": 1,
+  "fields": {
+    "nombre_palettes": 10,
+    "cout": 300,
+    "delai": 2,
+    "depart": 1,
+    "arrivee": 2
+  }
+},
+{
+  "model": "high_level.operation",
+  "pk": 1,
+  "fields": {
+    "nom": "Assemblage",
+    "operation_suivante": null,
+    "cout": 20,
+    "machine": 2,
+    "heures_de_travail": 2,
+    "consommation_electrique": 3,
+    "quantite_produits": [
+      2
+    ]
+  }
+},
+{
+  "model": "high_level.operation",
+  "pk": 2,
+  "fields": {
+    "nom": "Soudure du cadre",
+    "operation_suivante": 1,
+    "cout": 15,
+    "machine": 1,
+    "heures_de_travail": 1,
+    "consommation_electrique": 5,
+    "quantite_produits": [
+      1
+    ]
+  }
+},
+{
+  "model": "high_level.produit",
+  "pk": 1,
+  "fields": {
+    "nom": "Tubes d'acier",
+    "prix_de_vente": 0,
+    "duree_de_vie": 3650,
+    "nombre_par_palette": 100,
+    "operations": []
+  }
+},
+{
+  "model": "high_level.produit",
+  "pk": 2,
+  "fields": {
+    "nom": "Câbles",
+    "prix_de_vente": 0,
+    "duree_de_vie": 3650,
+    "nombre_par_palette": 200,
+    "operations": []
+  }
+},
+{
+  "model": "high_level.produit",
+  "pk": 3,
+  "fields": {
+    "nom": "Vélo",
+    "prix_de_vente": 450,
+    "duree_de_vie": 3650,
+    "nombre_par_palette": 10,
+    "operations": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "high_level.prixproduit",
+  "pk": 1,
+  "fields": {
+    "produit": 1,
+    "prix_achat": 10
+  }
+},
+{
+  "model": "high_level.prixproduit",
+  "pk": 2,
+  "fields": {
+    "produit": 2,
+    "prix_achat": 15
+  }
+},
+{
+  "model": "high_level.fournisseur",
+  "pk": 1,
+  "fields": {
+    "nom": "AcierPlus",
+    "prix_produits": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "high_level.quantiteproduit",
+  "pk": 1,
+  "fields": {
+    "produit": 1,
+    "nombre": 3
+  }
+},
+{
+  "model": "high_level.quantiteproduit",
+  "pk": 2,
+  "fields": {
+    "produit": 2,
+    "nombre": 2
+  }
+},
+{
+  "model": "high_level.quantiteproduit",
+  "pk": 3,
+  "fields": {
+    "produit": 1,
+    "nombre": 200
+  }
+},
+{
+  "model": "high_level.quantiteproduit",
+  "pk": 4,
+  "fields": {
+    "produit": 2,
+    "nombre": 200
+  }
+},
+{
+  "model": "high_level.quantiteproduit",
+  "pk": 5,
+  "fields": {
+    "produit": 3,
+    "nombre": 5
+  }
+},
+{
+  "model": "high_level.quantiteproduit",
+  "pk": 6,
+  "fields": {
+    "produit": 3,
+    "nombre": 1
+  }
+},
+{
+  "model": "high_level.stock",
+  "pk": 1,
+  "fields": {
+    "palettes_max": 20,
+    "quantite_produits": [
+      3,
+      4,
+      5
+    ]
+  }
+},
+{
+  "model": "high_level.pointdevente",
+  "pk": 1,
+  "fields": {
+    "nom": "Boutique Toulouse",
+    "lieu": 2,
+    "heures_de_travail": 35,
+    "stock": 1
+  }
+},
+{
+  "model": "high_level.facture",
+  "pk": 1,
+  "fields": {
+    "reduction": 5,
+    "point_de_vente": 1,
+    "client": "Alice",
+    "quantite_produits": [
+      6
+    ]
+  }
+}
+]

@@ -1,9 +1,56 @@
 from django.db import models
 
+
+class JsonMixin:
+    """Serialisation JSON partagée par tous les modèles."""
+
+    def json(self):
+        """Tous les champs du modèle ; les relations sont données par id."""
+        data = {"id": self.pk}
+        for field in self._meta.concrete_fields:
+            if field.primary_key:
+                continue
+            data[field.name] = getattr(self, field.attname)
+        for field in self._meta.many_to_many:
+            manager = getattr(self, field.name)
+            data[field.name] = list(manager.values_list("pk", flat=True))
+        return data
+
+    def json_extended(self, _path=frozenset()):
+        """Comme json(), mais les relations sont sérialisées récursivement.
+
+        _path contient les objets déjà en cours de sérialisation : en cas de
+        cycle (Produit -> Operation -> QuantiteProduit -> Produit), on se
+        contente de l'id pour éviter une récursion infinie.
+        """
+        path = _path | {(self._meta.label, self.pk)}
+        data = {"id": self.pk}
+        for field in self._meta.concrete_fields:
+            if field.primary_key:
+                continue
+            if field.is_relation:
+                related = getattr(self, field.name)
+                data[field.name] = (
+                    None if related is None else related._nested_json(path)
+                )
+            else:
+                data[field.name] = getattr(self, field.name)
+        for field in self._meta.many_to_many:
+            data[field.name] = [
+                obj._nested_json(path) for obj in getattr(self, field.name).all()
+            ]
+        return data
+
+    def _nested_json(self, path):
+        if (self._meta.label, self.pk) in path:
+            return {"id": self.pk}
+        return self.json_extended(path)
+
+
 # Create your models here.
 
 
-class Pays(models.Model):
+class Pays(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     tva = models.IntegerField()
     tarif_electrique = models.IntegerField()
@@ -13,7 +60,7 @@ class Pays(models.Model):
         return self.nom
 
 
-class Ville(models.Model):
+class Ville(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     taxe_immobiliere = models.IntegerField()
     prix_m2 = models.IntegerField()
@@ -23,7 +70,7 @@ class Ville(models.Model):
         return f"{self.nom} ({self.pays})"
 
 
-class Machine(models.Model):
+class Machine(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     prix = models.IntegerField()
     duree_de_vie = models.IntegerField()
@@ -37,7 +84,7 @@ class Machine(models.Model):
         return self.nom
 
 
-class QuantiteMachine(models.Model):
+class QuantiteMachine(JsonMixin, models.Model):
     machine = models.ForeignKey(Machine, on_delete=models.PROTECT)
     nombre = models.IntegerField()
 
@@ -48,7 +95,7 @@ class QuantiteMachine(models.Model):
         return f"{self.nombre} x {self.machine}"
 
 
-class Lieu(models.Model):
+class Lieu(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     ville = models.ForeignKey(Ville, on_delete=models.PROTECT)
     superficie = models.IntegerField()
@@ -64,7 +111,7 @@ class Lieu(models.Model):
         return f"{self.nom} ({self.ville})"
 
 
-class Transport(models.Model):
+class Transport(JsonMixin, models.Model):
     nombre_palettes = models.IntegerField()
     cout = models.IntegerField()
     delai = models.IntegerField()
@@ -75,7 +122,7 @@ class Transport(models.Model):
         return f"{self.depart} -> {self.arrivee}"
 
 
-class Operation(models.Model):
+class Operation(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     operation_suivante = models.ForeignKey(
         "self", on_delete=models.PROTECT, blank=True, null=True, related_name="+"
@@ -90,7 +137,7 @@ class Operation(models.Model):
         return self.nom
 
 
-class Produit(models.Model):
+class Produit(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     prix_de_vente = models.IntegerField()
     duree_de_vie = models.IntegerField()
@@ -101,7 +148,7 @@ class Produit(models.Model):
         return self.nom
 
 
-class PrixProduit(models.Model):
+class PrixProduit(JsonMixin, models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.PROTECT)
     prix_achat = models.IntegerField()
 
@@ -109,7 +156,7 @@ class PrixProduit(models.Model):
         return f"{self.produit} à {self.prix_achat}"
 
 
-class Fournisseur(models.Model):
+class Fournisseur(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     prix_produits = models.ManyToManyField(PrixProduit, blank=True)
 
@@ -117,7 +164,7 @@ class Fournisseur(models.Model):
         return self.nom
 
 
-class QuantiteProduit(models.Model):
+class QuantiteProduit(JsonMixin, models.Model):
     produit = models.ForeignKey(Produit, on_delete=models.PROTECT)
     nombre = models.IntegerField()
 
@@ -129,7 +176,7 @@ class QuantiteProduit(models.Model):
         return f"{self.nombre} x {self.produit}"
 
 
-class Stock(models.Model):
+class Stock(JsonMixin, models.Model):
     quantite_produits = models.ManyToManyField(QuantiteProduit, blank=True)
     palettes_max = models.IntegerField()
 
@@ -140,7 +187,7 @@ class Stock(models.Model):
         return f"Stock {self.pk} (max {self.palettes_max} palettes)"
 
 
-class PointDeVente(models.Model):
+class PointDeVente(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     lieu = models.ForeignKey(Lieu, on_delete=models.PROTECT)
     heures_de_travail = models.IntegerField()
@@ -153,7 +200,7 @@ class PointDeVente(models.Model):
         return self.nom
 
 
-class Facture(models.Model):
+class Facture(JsonMixin, models.Model):
     quantite_produits = models.ManyToManyField(QuantiteProduit, blank=True)
     reduction = models.IntegerField()
     point_de_vente = models.ForeignKey(PointDeVente, on_delete=models.PROTECT)
