@@ -38,13 +38,13 @@ class LieuCostsTests(TestCase):
             QuantiteMachine.objects.create(machine=m1, nombre=1),
             QuantiteMachine.objects.create(machine=m2, nombre=1),
         )
-        self.assertEqual(lieu.costs(), 103_000)
+        self.assertAlmostEqual(lieu.costs(), 103_000)
 
 
 class PointDeVenteCostsTests(TestCase):
     def test_costs(self):
         pays = Pays.objects.create(
-            nom="France", tva=20, tarif_electrique=0.20, salaire_minimum=1800
+            nom="France", tva=20, tarif_electrique=0.20, salaire_minimum=12
         )
         ville = Ville.objects.create(
             nom="Labège", taxe_immobiliere=0, prix_m2=2000, pays=pays
@@ -78,7 +78,7 @@ class PointDeVenteCostsTests(TestCase):
         pdv = PointDeVente.objects.create(
             nom="PDV", lieu=lieu, heures_de_travail=40, stock=stock
         )
-        self.assertEqual(pdv.costs(), 113_750)
+        self.assertAlmostEqual(pdv.costs(), 114_230)
 
 
 class JsonViewTests(TestCase):
@@ -148,3 +148,28 @@ class JsonViewTests(TestCase):
         data = produit.json_extended()
         inner = data["operations"][0]["quantite_produits"][0]["produit"]
         self.assertEqual(inner, {"id": produit.pk})
+
+
+class LieuElectricityTests(TestCase):
+    def test_lieu_costs_with_electricity(self):
+        pays = Pays.objects.create(
+            nom="France", tva=20, tarif_electrique=0.2, salaire_minimum=12
+        )
+        ville = Ville.objects.create(
+            nom="Labège", taxe_immobiliere=0, prix_m2=2000, pays=pays
+        )
+        m1 = Machine.objects.create(
+            nom="M1", prix=10_000, duree_de_vie=10, cout_maintenance=0, superficie=1
+        )
+        m2 = Machine.objects.create(
+            nom="M2", prix=5_000, duree_de_vie=10, cout_maintenance=0, superficie=1
+        )
+        lieu = Lieu.objects.create(
+            nom="Usine", ville=ville, superficie=50, consommation_electrique=5000
+        )
+        lieu.quantite_machines.add(
+            QuantiteMachine.objects.create(machine=m1, nombre=1),
+            QuantiteMachine.objects.create(machine=m2, nombre=1),
+        )
+        # 100 000 (terrain) + 15 000 (machines) + 5 000 kWh x 0.2 EUR
+        self.assertAlmostEqual(lieu.costs(), 116_000)

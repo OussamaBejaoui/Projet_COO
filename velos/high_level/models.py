@@ -105,7 +105,8 @@ class Lieu(JsonMixin, models.Model):
     def costs(self):
         terrain = self.superficie * self.ville.prix_m2
         machines = sum(qm.costs() for qm in self.quantite_machines.all())
-        return terrain + machines
+        electricite = self.consommation_electrique * self.ville.pays.tarif_electrique
+        return terrain + machines + electricite
 
     def __str__(self):
         return f"{self.nom} ({self.ville})"
@@ -194,7 +195,8 @@ class PointDeVente(JsonMixin, models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.PROTECT)
 
     def costs(self):
-        return self.lieu.costs() + self.stock.costs()
+        salaires = self.heures_de_travail * self.lieu.ville.pays.salaire_minimum
+        return self.lieu.costs() + self.stock.costs() + salaires
 
     def __str__(self):
         return self.nom
