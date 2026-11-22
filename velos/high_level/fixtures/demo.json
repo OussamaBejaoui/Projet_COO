@@ -5,7 +5,7 @@
   "fields": {
     "nom": "France",
     "tva": 20,
-    "tarif_electrique": 20,
+    "tarif_electrique": 0.20,
     "salaire_minimum": 12
   }
 },

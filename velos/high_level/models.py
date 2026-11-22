@@ -53,7 +53,7 @@ class JsonMixin:
 class Pays(JsonMixin, models.Model):
     nom = models.CharField(max_length=100)
     tva = models.IntegerField()
-    tarif_electrique = models.IntegerField()
+    tarif_electrique = models.FloatField()
     salaire_minimum = models.IntegerField()
 
     def __str__(self):

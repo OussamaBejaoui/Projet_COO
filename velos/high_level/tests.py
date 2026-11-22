@@ -20,7 +20,7 @@ from .models import (
 class LieuCostsTests(TestCase):
     def test_lieu_costs(self):
         pays = Pays.objects.create(
-            nom="France", tva=20, tarif_electrique=20, salaire_minimum=1800
+            nom="France", tva=20, tarif_electrique=0.20, salaire_minimum=1800
         )
         ville = Ville.objects.create(
             nom="Labège", taxe_immobiliere=0, prix_m2=2000, pays=pays
@@ -44,7 +44,7 @@ class LieuCostsTests(TestCase):
 class PointDeVenteCostsTests(TestCase):
     def test_costs(self):
         pays = Pays.objects.create(
-            nom="France", tva=20, tarif_electrique=20, salaire_minimum=1800
+            nom="France", tva=20, tarif_electrique=0.20, salaire_minimum=1800
         )
         ville = Ville.objects.create(
             nom="Labège", taxe_immobiliere=0, prix_m2=2000, pays=pays
@@ -85,7 +85,7 @@ class JsonViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         pays = Pays.objects.create(
-            nom="France", tva=20, tarif_electrique=20, salaire_minimum=12
+            nom="France", tva=20, tarif_electrique=0.20, salaire_minimum=12
         )
         cls.ville = Ville.objects.create(
             nom="Labège", taxe_immobiliere=6, prix_m2=2000, pays=pays
